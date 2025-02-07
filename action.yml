@@ -106,8 +106,9 @@ runs:
           $issues = Invoke-ScriptAnalyzer -ScriptDefinition $ScriptDefinition -Settings $Settings
 
           foreach ($issue in $issues) {
-            $hasErrors = $hasErrors -Or $issue.Severity.Contains("Error")
-            $level = $issue.Severity.Contains("Error") ? "error" : $issue.Severity.Contains("Warning") ? "warning" : "notice"
+            $severity = $issue.Severity.ToString()
+            $hasErrors = $hasErrors -Or $severity.Contains("Error")
+            $level = $severity.Contains("Error") ? "error" : $severity.Contains("Warning") ? "warning" : "notice"
             $line = $offset + $issue.Line - 1
 
             Write-Output "::${level} file=${fileName},line=${line},title=${env:ANNOTATIONS_TITLE}::${issue}"
