@@ -111,7 +111,6 @@ runs:
             $level = $severity.Contains("Error") ? "error" : $severity.Contains("Warning") ? "warning" : "notice"
             $line = $offset + $issue.Line - 1
 
-            Write-Information "$($issue.Severity) - ${fileName}:${line} - ${issue}"
             Write-Information "::${level} file=${fileName},line=${line},title=${env:ANNOTATIONS_TITLE}::${issue}"
           }
 
@@ -131,7 +130,7 @@ runs:
           $fileName = $FilePath.Substring(${PWD}.Path.Length + 1).Replace("\", "/")
           $shellName = "pwsh"
 
-          Write-Output "::group::${fileName}"
+          Write-Information "::group::${fileName}"
 
           $content = Get-Content -Path $FilePath -Raw
           $workflow = ConvertFrom-Yaml -Yaml $content
@@ -143,23 +142,23 @@ runs:
           if ($workflow.jobs) {
             foreach ($job in $workflow.jobs) {
               if ($job.Values.name) {
-                Write-Output "::group::$($job.Values.name)"
+                Write-Information "::group::$($job.Values.name)"
               }
               foreach ($step in $job.Values.steps) {
                 if ($step.run -And $step.shell -eq $shellName) {
                   if ($step.name) {
-                    Write-Output "::group::$($step.name)"
+                    Write-Information "::group::$($step.name)"
                   }
                   if (Invoke-ScriptAnalyzer-For-Script -Path $FilePath -ScriptDefinition $step.run -Settings $Settings -WarningsAsErrors $WarningsAsErrors) {
                     $hasErrors = $true
                   }
                   if ($step.name) {
-                    Write-Output "::endgroup::"
+                    Write-Information "::endgroup::"
                   }
                 }
               }
               if ($job.Values.name) {
-                Write-Output "::endgroup::"
+                Write-Information "::endgroup::"
               }
             }
           }
@@ -168,19 +167,19 @@ runs:
             foreach ($step in $workflow.runs.steps) {
               if ($step.run -And $step.shell -eq $shellName) {
                 if ($step.name) {
-                  Write-Output "::group::$($step.name)"
+                  Write-Information "::group::$($step.name)"
                 }
                 if (Invoke-ScriptAnalyzer-For-Script -Path $FilePath -ScriptDefinition $step.run -Settings $Settings -WarningsAsErrors $WarningsAsErrors) {
                   $hasErrors = $true
                 }
                 if ($step.name) {
-                  Write-Output "::endgroup::"
+                  Write-Information "::endgroup::"
                 }
               }
             }
           }
 
-          Write-Output "::endgroup::"
+          Write-Information "::endgroup::"
 
           return $hasErrors
         }
