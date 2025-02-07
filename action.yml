@@ -8,14 +8,14 @@ inputs:
   annotations-title:
     description: 'The optional title to use for workflow annotations. The defaults to PSScriptAnalyzer.'
     required: false
-  path:
-    description: 'The optional path containing the files to lint. Defaults to the GitHub workspace directory.'
-    required: false
   powershell-yaml-version:
     description: 'The optional version of the powershell-yaml module to install. Defaults to the latest version.'
     required: false
   psscriptanalyzer-version:
     description: 'The optional version of the PSScriptAnalyzer module to install. Defaults to the latest version.'
+    required: false
+  repo-path:
+    description: 'The optional path to the repository containing the files to lint. Defaults to the GitHub workspace directory.'
     required: false
   settings-path:
     description: 'An optional path to a file containing a user-defined profile containing settings for PSScriptAnalyzer. By default errors and warnings are reported for the default rules.'
@@ -79,7 +79,7 @@ runs:
       shell: pwsh
       env:
         ANNOTATIONS_TITLE: ${{ inputs.annotations-title || 'PSScriptAnalyzer' }}
-        PATH_TO_LINT: ${{ inputs.path || github.workspace }}
+        REPO_PATH: ${{ inputs.repo-path || github.workspace }}
         SETTINGS_PATH: ${{ inputs.settings-path || '' }}
         TREAT_WARNINGS_AS_ERRORS: ${{ inputs.treat-warnings-as-errors || 'false' }}
       run: |
@@ -174,7 +174,7 @@ runs:
           }
         }
 
-        $workflowsPath = (Join-Path -Path ${env:PATH_TO_LINT} ".github" "workflows")
+        $workflowsPath = (Join-Path -Path ${env:REPO_PATH} ".github" "workflows")
         $yamlFiles = @()
 
         $yamlFiles += Get-ChildItem -Path ${env:DIRECTORY_TO_LINT} -Filter action.yml -Recurse
