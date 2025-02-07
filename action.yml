@@ -130,8 +130,6 @@ runs:
           $fileName = $FilePath.Substring(${PWD}.Path.Length + 1).Replace("\", "/")
           $shellName = "pwsh"
 
-          Write-Information "::group::${fileName}"
-
           $content = Get-Content -Path $FilePath -Raw
           $workflow = ConvertFrom-Yaml -Yaml $content
 
@@ -141,24 +139,12 @@ runs:
 
           if ($workflow.jobs) {
             foreach ($job in $workflow.jobs) {
-              if ($job.Values.name) {
-                Write-Information "::group::$($job.Values.name)"
-              }
               foreach ($step in $job.Values.steps) {
                 if ($step.run -And $step.shell -eq $shellName) {
-                  if ($step.name) {
-                    Write-Information "::group::$($step.name)"
-                  }
                   if (Invoke-ScriptAnalyzer-For-Script -Path $FilePath -ScriptDefinition $step.run -Settings $Settings -WarningsAsErrors $WarningsAsErrors) {
                     $hasErrors = $true
                   }
-                  if ($step.name) {
-                    Write-Information "::endgroup::"
-                  }
                 }
-              }
-              if ($job.Values.name) {
-                Write-Information "::endgroup::"
               }
             }
           }
@@ -166,20 +152,12 @@ runs:
           if ($workflow.runs) {
             foreach ($step in $workflow.runs.steps) {
               if ($step.run -And $step.shell -eq $shellName) {
-                if ($step.name) {
-                  Write-Information "::group::$($step.name)"
-                }
                 if (Invoke-ScriptAnalyzer-For-Script -Path $FilePath -ScriptDefinition $step.run -Settings $Settings -WarningsAsErrors $WarningsAsErrors) {
                   $hasErrors = $true
-                }
-                if ($step.name) {
-                  Write-Information "::endgroup::"
                 }
               }
             }
           }
-
-          Write-Information "::endgroup::"
 
           return $hasErrors
         }
