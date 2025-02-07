@@ -48,7 +48,7 @@ jobs:
           **/*.md
 
     - name: Lint self
-      uses: '.'
+      uses: ./action.yml
       with:
         annotations-title: 'PSScriptAnalyzer'
         powershell-yaml-version: '0.4.12'
