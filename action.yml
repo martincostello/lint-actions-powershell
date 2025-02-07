@@ -85,18 +85,7 @@ runs:
         TREAT_WARNINGS_AS_ERRORS: ${{ inputs.treat-warnings-as-errors || 'false' }}
       run: |
         $ErrorActionPreference = "Stop"
-        Write-Output "::debug::Starting script"
-
-        function Write-Debug-Message {
-          param (
-            [Parameter(Mandatory)]
-            [string]$Message
-          )
-
-          Write-Output "::debug::${Message}"
-        }
-
-        Write-Debug-Message "Linting PowerShell scripts in GitHub Actions workflows and actions..."
+        $InformationPreference = "Continue"
 
         function Invoke-ScriptAnalyzer-For-Script {
           param (
@@ -119,7 +108,7 @@ runs:
 
           foreach ($issue in $issues) {
             $severity = $issue.Severity.ToString()
-            $hasErrors = $WarningsAsErrors -Or $severity.Contains("Error")
+            $hasErrors = $hasErrors -Or ($severity.Contains("Error") -Or ($severity.Contains("Warning") -And $WarningsAsErrors))
             $level = $severity.Contains("Error") ? "error" : $severity.Contains("Warning") ? "warning" : "notice"
             $line = $offset + $issue.Line - 1
 
@@ -145,7 +134,7 @@ runs:
           $content = Get-Content -Path $FilePath -Raw
           $workflow = ConvertFrom-Yaml -Yaml $content
 
-          Write-Output "Linting ${fileName}..."
+          Write-Information "Linting ${fileName}..."
 
           $hasErrors = $false
 
@@ -174,8 +163,6 @@ runs:
           return $hasErrors
         }
 
-        Write-Debug-Message "Getting inputs..."
-
         $hasErrors = $false
         $warningsAsErrors = ${env:TREAT_WARNINGS_AS_ERRORS} -ieq "true"
 
@@ -188,9 +175,7 @@ runs:
           }
         }
 
-        Write-Debug-Message "Getting workflows..."
-
-        $workflowsPath = (Join-Path ${env:PATH_TO_LINT} ".github" "workflows")
+        $workflowsPath = (Join-Path -Path ${env:PATH_TO_LINT} ".github" "workflows")
         $yamlFiles = @()
 
         $yamlFiles += Get-ChildItem -Path ${env:DIRECTORY_TO_LINT} -Filter action.yml -Recurse
@@ -201,8 +186,6 @@ runs:
           $yamlFiles += Get-ChildItem -Path $workflowsPath -Filter "*.yaml"
         }
 
-        Write-Debug-Message "Analyzing files..."
-
         foreach ($file in $yamlFiles) {
           if (Invoke-ScriptAnalyzer-For-File -FilePath $file.FullName -Settings $settings -WarningsAsErrors $warningsAsErrors) {
             $hasErrors = $true
@@ -210,9 +193,7 @@ runs:
         }
 
         if ($hasErrors) {
-          Write-Debug-Message "Diagnostics found. Exiting with a non-zero exit code."
           # See https://github.com/actions/runner/issues/351.
           $Host.SetShouldExit(1)
         }
 
-        Write-Debug-Message "::debug::Success."
