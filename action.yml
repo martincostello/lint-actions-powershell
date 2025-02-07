@@ -8,7 +8,6 @@ inputs:
   annotations-title:
     description: 'The optional title to use for workflow annotations. The defaults to PSScriptAnalyzer.'
     required: false
-    default: 'PSScriptAnalyzer'
   path:
     description: 'The optional path containing the files to lint. Defaults to the GitHub workspace directory.'
     required: false
@@ -79,7 +78,7 @@ runs:
     - name: Lint GitHub Actions action and workflow steps using PowerShell
       shell: pwsh
       env:
-        ANNOTATIONS_TITLE: ${{ inputs.annotations-title }}
+        ANNOTATIONS_TITLE: ${{ inputs.annotations-title || 'PSScriptAnalyzer' }}
         PATH_TO_LINT: ${{ inputs.path || github.workspace }}
         SETTINGS_PATH: ${{ inputs.settings-path || '' }}
         TREAT_WARNINGS_AS_ERRORS: ${{ inputs.treat-warnings-as-errors || 'false' }}
@@ -112,6 +111,7 @@ runs:
             $level = $severity.Contains("Error") ? "error" : $severity.Contains("Warning") ? "warning" : "notice"
             $line = $offset + $issue.Line - 1
 
+            Write-Information "$($issue.Severity) - ${fileName}:${line} - ${issue}"
             Write-Output "::${level} file=${fileName},line=${line},title=${env:ANNOTATIONS_TITLE}::${issue}"
           }
 
