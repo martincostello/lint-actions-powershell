@@ -1,0 +1,196 @@
+name: 'Lint Actions PowerShell'
+description: 'Lints inline PowerShell scripts in GitHub Actions composite actions and workflows using PSScriptAnalyzer.'
+author: 'Martin Costello'
+branding:
+  icon: 'check-square'
+  color: 'blue'
+inputs:
+  annotations-title:
+    description: 'The optional title to use for workflow annotations. The defaults to PSScriptAnalyzer.'
+    required: false
+    default: 'PSScriptAnalyzer'
+  path:
+    description: 'The optional path containing the files to lint. Defaults to the GitHub workspace directory.'
+    required: false
+  powershell-yaml-version:
+    description: 'The optional version of the powershell-yaml module to install. Defaults to the latest version.'
+    required: false
+  psscriptanalyzer-version:
+    description: 'The optional version of the PSScriptAnalyzer module to install. Defaults to the latest version.'
+    required: false
+  settings-path:
+    description: 'An optional path to a file containing a user-defined profile containing settings for PSScriptAnalyzer. By default errors and warnings are reported for the default rules.'
+    required: false
+  treat-warnings-as-errors:
+    description: 'Whether to treat warnings as errors. Defaults to false.'
+    required: false
+
+runs:
+  using: 'composite'
+
+  steps:
+
+    - name: Install PSScriptAnalyzer
+      shell: pwsh
+      env:
+        PSSCRIPTANALYZER_VERSION: ${{ inputs.psscriptanalyzer-version || '' }}
+      run: |
+        $installModule = $false
+        $modules = Get-Module -ListAvailable -Name PSScriptAnalyzer
+
+        if ($modules.Count -eq 0) {
+          $installModule = $true
+        } elseif (-Not [string]::IsNullOrWhiteSpace(${env:PSSCRIPTANALYZER_VERSION})) {
+          $modules = $modules | Where-Object { $_.Version -eq ${env:PSSCRIPTANALYZER_VERSION} }
+          $installModule = $modules.Count -eq 0
+        }
+
+        if ($installModule) {
+          if ([string]::IsNullOrWhiteSpace(${env:PSSCRIPTANALYZER_VERSION})) {
+            Install-Module PSScriptAnalyzer -Force
+          } else {
+            Install-Module PSScriptAnalyzer -Force -MaximumVersion ${env:PSSCRIPTANALYZER_VERSION}
+          }
+        }
+
+    - name: Install powershell-yaml
+      shell: pwsh
+      env:
+        POWERSHELL_YAML_VERSION: ${{ inputs.powershell-yaml-version || '' }}
+      run: |
+        $installModule = $false
+        $modules = Get-Module -ListAvailable -Name powershell-yaml
+
+        if ($modules.Count -eq 0) {
+          $installModule = $true
+        } elseif (-Not [string]::IsNullOrWhiteSpace(${env:POWERSHELL_YAML_VERSION})) {
+          $modules = $modules | Where-Object { $_.Version -eq ${env:POWERSHELL_YAML_VERSION} }
+          $installModule = $modules.Count -eq 0
+        }
+
+        if ($installModule) {
+          if ([string]::IsNullOrWhiteSpace(${env:POWERSHELL_YAML_VERSION})) {
+            Install-Module powershell-yaml -Force
+          } else {
+            Install-Module powershell-yaml -Force -MaximumVersion ${env:POWERSHELL_YAML_VERSION}
+          }
+        }
+
+    - name: Lint GitHub Actions action and workflow steps using PowerShell
+      shell: pwsh
+      env:
+        ANNOTATIONS_TITLE: ${{ inputs.annotations-title }}
+        PATH_TO_LINT: ${{ inputs.path || github.workspace }}
+        SETTINGS_PATH: ${{ inputs.settings-path || '' }}
+        TREAT_WARNINGS_AS_ERRORS: ${{ inputs.treat-warnings-as-errors || 'false' }}
+      run: |
+        $ErrorActionPreference = "Stop"
+
+        function Invoke-ScriptAnalyzer-For-Script {
+          param (
+            [Parameter(Mandatory)]
+            [string]$Path,
+            [Parameter(Mandatory)]
+            [string]$ScriptDefinition,
+            [Parameter(Mandatory)]
+            $Settings,
+            [Parameter(Mandatory)]
+            [bool]$WarningsAsErrors
+          )
+
+          # Get a best guess at the line number for this script definition
+          $firstLine = $ScriptDefinition.Split("`n")[0]
+          $offset    = (Select-String $Path -Pattern ([Regex]::Escape($firstLine))).LineNumber
+
+          $hasErrors = $WarningsAsErrors
+          $issues = Invoke-ScriptAnalyzer -ScriptDefinition $ScriptDefinition -Settings $Settings
+
+          foreach ($issue in $issues) {
+            $hasErrors = $hasErrors -Or $issue.Severity.Contains("Error")
+            $level = $issue.Severity.Contains("Error") ? "error" : $issue.Severity.Contains("Warning") ? "warning" : "notice"
+            $line = $offset + $issue.Line - 1
+
+            Write-Output "::${level} file=${fileName},line=${line},title=${env:ANNOTATIONS_TITLE}::${issue}"
+          }
+
+          return $hasErrors
+        }
+
+        function Invoke-ScriptAnalyzer-For-File {
+          param (
+            [Parameter(Mandatory)]
+            [string]$FilePath,
+            [Parameter(Mandatory)]
+            $Settings,
+            [Parameter(Mandatory)]
+            [bool]$WarningsAsErrors
+          )
+  
+          $fileName = $FilePath.Substring(${PWD}.Path.Length + 1).Replace("\", "/")
+          $shellName = "pwsh"
+
+          $content = Get-Content -Path $FilePath -Raw
+          $workflow = ConvertFrom-Yaml -Yaml $content
+
+          Write-Output "Linting ${fileName}..."
+
+          $hasErrors = $false
+
+          if ($workflow.jobs) {
+            foreach ($job in $workflow.jobs) {
+              foreach ($step in $job.Values.steps) {
+                if ($step.run -And $step.shell -eq $shellName) {
+                  if (Invoke-ScriptAnalyzer-For-Script -Path $FilePath -ScriptDefinition $step.run -Settings $Settings -WarningsAsErrors $WarningsAsErrors) {
+                    $hasErrors = $true
+                  }
+                }
+              }
+            }
+          }
+
+          if ($workflow.runs) {
+            foreach ($step in $workflow.runs.steps) {
+              if ($step.run -And $step.shell -eq $shellName) {
+                if (Invoke-ScriptAnalyzer-For-Script -Path $FilePath -ScriptDefinition $step.run -Settings $Settings -WarningsAsErrors $WarningsAsErrors) {
+                  $hasErrors = $true
+                }
+              }
+            }
+          }
+
+          return $hasErrors
+        }
+
+        $hasErrors = $false
+        $warningsAsErrors = ${env:TREAT_WARNINGS_AS_ERRORS} -ieq "true"
+
+        $settings = ${env:SETTINGS_PATH}
+
+        if ([string]::IsNullOrWhiteSpace($settings)) {
+          $settings = @{
+            IncludeDefaultRules = $true
+            Severity = @("Error", "Warning")
+          }
+        }
+
+        $workflowsPath = (Join-Path ${env:PATH_TO_LINT} ".github" "workflows")
+        $yamlFiles = @()
+
+        $yamlFiles += Get-ChildItem -Path ${env:DIRECTORY_TO_LINT} -Filter action.yml -Recurse
+        $yamlFiles += Get-ChildItem -Path ${env:DIRECTORY_TO_LINT} -Filter action.yaml -Recurse
+
+        if (Test-Path $workflowsPath) {
+          $yamlFiles += Get-ChildItem -Path $workflowsPath -Filter "*.yml"
+          $yamlFiles += Get-ChildItem -Path $workflowsPath -Filter "*.yaml"
+        }
+
+        foreach ($file in $yamlFiles) {
+          if (Invoke-ScriptAnalyzer-For-File -FilePath $file.FullName -Settings $settings -WarningsAsErrors $warningsAsErrors) {
+            $hasErrors = $true
+          }
+        }
+
+        if ($hasErrors) {
+          # See https://github.com/actions/runner/issues/351.
+          $Host.SetShouldExit(1)
+        }
