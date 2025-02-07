@@ -177,13 +177,12 @@ runs:
         $workflowsPath = (Join-Path -Path ${env:REPO_PATH} ".github" "workflows")
         $yamlFiles = @()
 
-        $yamlFiles += Get-ChildItem -Path ${env:DIRECTORY_TO_LINT} -Filter action.yml -Recurse
-        $yamlFiles += Get-ChildItem -Path ${env:DIRECTORY_TO_LINT} -Filter action.yaml -Recurse
+        $yamlFiles += Get-ChildItem -Path ${env:DIRECTORY_TO_LINT -Filter action.yml -Recurse
+        $yamlFiles += Get-ChildItem -Path ${env:DIRECTORY_TO_LINT -Filter action.yaml -Recurse
 
         if (Test-Path $workflowsPath) {
           $yamlFiles += Get-ChildItem -Path $workflowsPath -Filter "*.yml"
           $yamlFiles += Get-ChildItem -Path $workflowsPath -Filter "*.yaml"
-        }
 
         foreach ($file in $yamlFiles) {
           if (Invoke-ScriptAnalyzer-For-File -FilePath $file.FullName -Settings $settings -WarningsAsErrors $warningsAsErrors) {
