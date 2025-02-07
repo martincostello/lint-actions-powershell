@@ -27,8 +27,8 @@ The repository is hosted in [GitHub][repo]: <https://github.com/martincostello/l
 
 This project is licensed under the [Apache 2.0][license] license.
 
-[build-badge]: https://github.com/martincostello/lint-actions-powershell/actions/workflows/build.yml/badge.svg?branch=main&event=push
-[build-status]: https://github.com/martincostello/lint-actions-powershell/actions?query=workflow%3Abuild+branch%3Amain+event%3Apush "Continuous Integration for this project"
+[build-badge]: https://github.com/martincostello/lint-actions-powershell/actions/workflows/lint.yml/badge.svg?branch=main&event=push
+[build-status]: https://github.com/martincostello/lint-actions-powershell/actions?query=workflow%3Alint+branch%3Amain+event%3Apush "Continuous Integration for this project"
 <!--
 [coverage-badge]: https://codecov.io/gh/martincostello/lint-actions-powershell/branch/main/graph/badge.svg
 [coverage-report]: https://codecov.io/gh/martincostello/lint-actions-powershell "Code coverage report for this project"
