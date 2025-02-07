@@ -114,12 +114,12 @@ runs:
           $firstLine = $ScriptDefinition.Split("`n")[0]
           $offset    = (Select-String $Path -Pattern ([Regex]::Escape($firstLine))).LineNumber
 
-          $hasErrors = $WarningsAsErrors
+          $hasErrors = $false
           $issues = Invoke-ScriptAnalyzer -ScriptDefinition $ScriptDefinition -Settings $Settings
 
           foreach ($issue in $issues) {
             $severity = $issue.Severity.ToString()
-            $hasErrors = $hasErrors -Or $severity.Contains("Error")
+            $hasErrors = $WarningsAsErrors -Or $severity.Contains("Error")
             $level = $severity.Contains("Error") ? "error" : $severity.Contains("Warning") ? "warning" : "notice"
             $line = $offset + $issue.Line - 1
 
