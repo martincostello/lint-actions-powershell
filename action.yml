@@ -87,6 +87,12 @@ runs:
         $ErrorActionPreference = "Stop"
         $InformationPreference = "Continue"
 
+        Write-Host "Bad"
+
+        function Foo-Bar {
+          Write-Host "Bad prefix"
+        }
+
         function Invoke-ScriptAnalyzer-For-Script {
           param (
             [Parameter(Mandatory)]
