@@ -7,16 +7,17 @@
 
 Lints inline PowerShell script steps in GitHub Actions.
 
-GitHub Actions workflows in the `.github/workflows` directory and
-`actions/*.yml` files for custom actions are linted using
+GitHub Actions workflows in the `.github/workflows` directory
+and `action.yml` files for custom actions are linted using
 [PSScriptAnalyzer][PSScriptAnalyzer] to check for common issues and best practices.
+
+Issues found by PSScriptAnalyzer are emitted as [GitHub Actions workflow annotations][workflow-annotations].
 
 ## Examples
 
 ### Basic Usage
 
-To lint PowerShell script steps in a GitHub Actions workflow using the
-default rules for warnigns and errors:
+To lint PowerShell script steps in a GitHub Actions workflow using the default rules:
 
 ```yml
 steps:
@@ -91,3 +92,4 @@ This project is licensed under the [Apache 2.0][license] license.
 [repo]: https://github.com/martincostello/lint-actions-powershell "This project on GitHub.com"
 [scorecard-badge]: https://api.securityscorecards.dev/projects/github.com/martincostello/lint-actions-powershell/badge
 [scorecard-report]: https://securityscorecards.dev/viewer/?uri=github.com/martincostello/lint-actions-powershell "OpenSSF Scorecard for this project"
+[workflow-annotations]: https://docs.github.com/actions/writing-workflows/choosing-what-your-workflow-does/workflow-commands-for-github-actions "Workflow commands for GitHub Actions"
