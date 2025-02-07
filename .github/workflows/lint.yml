@@ -15,6 +15,8 @@ permissions: {}
 
 env:
   FORCE_COLOR: 3
+  POWERSHELL_YAML_VERSION: '0.4.11'
+  PSSCRIPTANALYZER_VERSION: '1.22.0'
   TERM: xterm
 
 jobs:
@@ -51,7 +53,7 @@ jobs:
       uses: ./
       with:
         annotations-title: 'PSScriptAnalyzer'
-        powershell-yaml-version: '0.4.12'
-        psscriptanalyzer-version: '1.23.0'
+        powershell-yaml-version: ${{ env.POWERSHELL_YAML_VERSION }}
+        psscriptanalyzer-version: ${{ env.PSSCRIPTANALYZER_VERSION }}
         settings-path: 'ScriptAnalyzerProfile.ps1'
         treat-warnings-as-errors: true
