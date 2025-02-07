@@ -12,7 +12,6 @@ permissions: read-all
 
 jobs:
   analysis:
-    if: false # TODO Enable once public
     runs-on: ubuntu-latest
 
     permissions:
