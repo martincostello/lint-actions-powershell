@@ -175,7 +175,7 @@ runs:
           }
         }
 
-        $workflowsPath = (Join-Path -Path ${env:PATH_TO_LINT} ".github" "workflows")
+        $workflowsPath = (Join-Path ${env:PATH_TO_LINT} ".github" "workflows")
         $yamlFiles = @()
 
         $yamlFiles += Get-ChildItem -Path ${env:DIRECTORY_TO_LINT} -Filter action.yml -Recurse
