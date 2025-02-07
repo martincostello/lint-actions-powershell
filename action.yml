@@ -118,6 +118,7 @@ runs:
             $level = $severity.Contains("Error") ? "error" : $severity.Contains("Warning") ? "warning" : "notice"
             $line = $offset + $issue.Line - 1
 
+            Write-Information "[$($issue.Severity)] {fileName}:${line} - ${issue}"
             Write-Output "::${level} file=${fileName},line=${line},title=${env:ANNOTATIONS_TITLE}::${issue}"
           }
 
