@@ -61,7 +61,6 @@ jobs:
         $updates = @()
 
         $workflows = @(
-          "apply-migration",
           "lint"
         )
 
