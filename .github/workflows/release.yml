@@ -29,6 +29,7 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           filter: 'tree:0'
+          persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
           show-progress: false
           token: ${{ secrets.COSTELLOBOT_TOKEN }}
 
@@ -43,7 +44,7 @@ jobs:
           script: |
             const { repo, owner } = context.repo;
             const draft = process.env.DRAFT === 'true';
-            
+
             let version = process.env.VERSION;
 
             if (version.startsWith('v')) {
