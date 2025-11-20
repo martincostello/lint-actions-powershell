@@ -47,7 +47,7 @@ steps:
 ### Optional
 
 | **Name** | **Description** | **Default** |
-|:--|:--|:--|
+| :------- | :-------------- | :---------- |
 | `annotations-title` | The optional title to use for workflow annotations. | `'PSScriptAnalyzer'` |
 | `powershell-yaml-version` | The optional version of the [powershell-yaml][powershell-yaml] module to install. | Latest |
 | `psscriptanalyzer-version` | The optional version of the [PSScriptAnalyzer][PSScriptAnalyzer] module to install. | Latest |
