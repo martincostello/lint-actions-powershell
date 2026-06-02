@@ -55,7 +55,7 @@ jobs:
           DRAFT: ${{ inputs.publish != true }}
           VERSION: ${{ inputs.version }}
         with:
-          github-token: ${{ secrets.COSTELLOBOT_TOKEN }}
+          github-token: ${{ steps.get-github-token.outputs.token }}
           script: |
             const { repo, owner } = context.repo;
             const draft = process.env.DRAFT === 'true';
