@@ -34,21 +34,52 @@ runs:
       env:
         PSSCRIPTANALYZER_VERSION: ${{ inputs.psscriptanalyzer-version || '' }}
       run: |
+        $ErrorActionPreference = "Stop"
+
+        $moduleName = "PSScriptAnalyzer"
+        $moduleVersion = ${env:PSSCRIPTANALYZER_VERSION}
+
         $installModule = $false
-        $modules = Get-Module -ListAvailable -Name PSScriptAnalyzer
+        $modules = Get-Module -ListAvailable -Name $moduleName
 
         if ($modules.Count -eq 0) {
           $installModule = $true
-        } elseif (-Not [string]::IsNullOrWhiteSpace(${env:PSSCRIPTANALYZER_VERSION})) {
-          $modules = $modules | Where-Object { $_.Version -eq ${env:PSSCRIPTANALYZER_VERSION} }
+        } elseif (-Not [string]::IsNullOrWhiteSpace($moduleVersion)) {
+          $modules = $modules | Where-Object { $_.Version -eq $moduleVersion }
           $installModule = $modules.Count -eq 0
         }
 
         if ($installModule) {
-          if ([string]::IsNullOrWhiteSpace(${env:PSSCRIPTANALYZER_VERSION})) {
-            Install-Module PSScriptAnalyzer -Force
-          } else {
-            Install-Module PSScriptAnalyzer -Force -MaximumVersion ${env:PSSCRIPTANALYZER_VERSION}
+          $usePSResourceGet = $PSVersionTable.PSVersion -ge [System.Version]"7.4"
+          $maxAttempts = 5
+          $delaySeconds = 2
+
+          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            try {
+              if ($usePSResourceGet) {
+                if ([string]::IsNullOrWhiteSpace($moduleVersion)) {
+                  Install-PSResource -Name $moduleName -TrustRepository -Quiet -ErrorAction Stop
+                } else {
+                  Install-PSResource -Name $moduleName -Version "(,${moduleVersion}]" -TrustRepository -Quiet -ErrorAction Stop
+                }
+              } elseif ([string]::IsNullOrWhiteSpace($moduleVersion)) {
+                Install-Module -Name $moduleName -Force -ErrorAction Stop
+              } else {
+                Install-Module -Name $moduleName -Force -MaximumVersion $moduleVersion -ErrorAction Stop
+              }
+
+              break
+            } catch {
+              if ($attempt -ge $maxAttempts) {
+                throw
+              }
+
+              Write-Warning "Failed to install ${moduleName} (attempt ${attempt} of ${maxAttempts}): $($_.Exception.Message)"
+              Write-Output "Retrying in ${delaySeconds} seconds..."
+
+              Start-Sleep -Seconds $delaySeconds
+              $delaySeconds *= 2
+            }
           }
         }
 
@@ -57,21 +88,52 @@ runs:
       env:
         POWERSHELL_YAML_VERSION: ${{ inputs.powershell-yaml-version || '' }}
       run: |
+        $ErrorActionPreference = "Stop"
+
+        $moduleName = "powershell-yaml"
+        $moduleVersion = ${env:POWERSHELL_YAML_VERSION}
+
         $installModule = $false
-        $modules = Get-Module -ListAvailable -Name powershell-yaml
+        $modules = Get-Module -ListAvailable -Name $moduleName
 
         if ($modules.Count -eq 0) {
           $installModule = $true
-        } elseif (-Not [string]::IsNullOrWhiteSpace(${env:POWERSHELL_YAML_VERSION})) {
-          $modules = $modules | Where-Object { $_.Version -eq ${env:POWERSHELL_YAML_VERSION} }
+        } elseif (-Not [string]::IsNullOrWhiteSpace($moduleVersion)) {
+          $modules = $modules | Where-Object { $_.Version -eq $moduleVersion }
           $installModule = $modules.Count -eq 0
         }
 
         if ($installModule) {
-          if ([string]::IsNullOrWhiteSpace(${env:POWERSHELL_YAML_VERSION})) {
-            Install-Module powershell-yaml -Force
-          } else {
-            Install-Module powershell-yaml -Force -MaximumVersion ${env:POWERSHELL_YAML_VERSION}
+          $usePSResourceGet = $PSVersionTable.PSVersion -ge [System.Version]"7.4"
+          $maxAttempts = 5
+          $delaySeconds = 2
+
+          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            try {
+              if ($usePSResourceGet) {
+                if ([string]::IsNullOrWhiteSpace($moduleVersion)) {
+                  Install-PSResource -Name $moduleName -TrustRepository -Quiet -ErrorAction Stop
+                } else {
+                  Install-PSResource -Name $moduleName -Version "(,${moduleVersion}]" -TrustRepository -Quiet -ErrorAction Stop
+                }
+              } elseif ([string]::IsNullOrWhiteSpace($moduleVersion)) {
+                Install-Module -Name $moduleName -Force -ErrorAction Stop
+              } else {
+                Install-Module -Name $moduleName -Force -MaximumVersion $moduleVersion -ErrorAction Stop
+              }
+
+              break
+            } catch {
+              if ($attempt -ge $maxAttempts) {
+                throw
+              }
+
+              Write-Warning "Failed to install ${moduleName} (attempt ${attempt} of ${maxAttempts}): $($_.Exception.Message)"
+              Write-Output "Retrying in ${delaySeconds} seconds..."
+
+              Start-Sleep -Seconds $delaySeconds
+              $delaySeconds *= 2
+            }
           }
         }
 
